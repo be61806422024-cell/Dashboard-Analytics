@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
-st.set_page_config(page_title="Financial Dashboard", layout="wide")
-st.title("🏦Financial Dashboard")
+st.set_page_config(page_title="KEMU SACCO Financial Dashboard", layout="wide")
+st.title("🏦 KEMU SACCO Financial Dashboard")
 st.markdown("#### Statement of Comprehensive Income & Statement of Financial Position (2021–2025)")
 
 # ------------------------------------------------------------
@@ -33,7 +32,6 @@ def load_income_data():
         "Retained Earnings (added to reserves)": [159_408, 149_978, 2_788_803, 2_983_806, 146_663],
     }
     df = pd.DataFrame(data)
-    # Additional calculated columns
     df["Cost of funds / Revenue (%)"] = (df["Interest on member deposits"] / df["Total Revenue"]) * 100
     df["Net surplus margin (%)"] = (df["Net surplus after tax"] / df["Total Revenue"]) * 100
     df["Dividend payout ratio (%)"] = (df["Proposed Dividends"] / df["Net surplus after tax"]) * 100
@@ -66,20 +64,17 @@ def load_balance_data():
         "Total Liabilities & Equity": [86_118_488, 89_892_256, 103_677_299, 113_140_510, 135_179_807],
     }
     df = pd.DataFrame(data)
-    # Add key ratios
     df["Loans / Assets (%)"] = (df["Loans portfolio (net)"] / df["Total Assets"]) * 100
     df["Equity / Assets (%)"] = (df["Total Shareholders' Funds"] / df["Total Assets"]) * 100
     df["Cash / Assets (%)"] = (df["Cash and cash equivalents"] / df["Total Assets"]) * 100
     df["Member deposits / Assets (%)"] = (df["Non-withdrawable member deposits"] / df["Total Assets"]) * 100
     return df
 
-# Load datasets
+# Load data
 income_df = load_income_data()
 balance_df = load_balance_data()
 
-# ------------------------------------------------------------
-# SIDEBAR: Year selection for all charts
-# ------------------------------------------------------------
+# Sidebar year selection
 st.sidebar.header("Filters")
 years_available = income_df["Year"].tolist()
 selected_years = st.sidebar.multiselect("Select Years for Charts", years_available, default=years_available)
@@ -90,7 +85,7 @@ filtered_income = income_df[income_df["Year"].isin(selected_years)]
 filtered_balance = balance_df[balance_df["Year"].isin(selected_years)]
 
 # ------------------------------------------------------------
-# MAIN DASHBOARD
+# Key Metrics Row (latest year 2025)
 # ------------------------------------------------------------
 st.header("📈 Key Metrics - Latest Year (2025)")
 col1, col2, col3, col4 = st.columns(4)
@@ -104,34 +99,41 @@ col4.metric("Shareholders' Funds", f"Ksh {latest_balance['Total Shareholders\' F
 
 st.markdown("---")
 
-# Create tabs for Income Statement and Balance Sheet
+# TABS
 tab1, tab2 = st.tabs(["📊 Income Statement (P&L)", "🏛️ Balance Sheet (Statement of Financial Position)"])
 
 # ================= TAB 1: INCOME STATEMENT =================
 with tab1:
     st.subheader("💰 Income Statement Trends (2021–2025)")
     
-    # Line graph: Revenue vs Operating Costs
+    # Graph 1: Revenue vs Operating Costs
     fig1 = go.Figure()
     fig1.add_trace(go.Scatter(x=filtered_income["Year"], y=filtered_income["Total Revenue"], mode="lines+markers", name="Total Revenue"))
     fig1.add_trace(go.Scatter(x=filtered_income["Year"], y=filtered_income["Total Operating Costs"], mode="lines+markers", name="Operating Costs (excl deposit interest)"))
     fig1.update_layout(title="Revenue and Operating Costs", xaxis_title="Year", yaxis_title="Ksh")
     st.plotly_chart(fig1, use_container_width=True)
     
-    # Net surplus after tax vs Dividends
+    # Graph 2: Operating Expenses Breakdown (NEW)
+    st.subheader("📉 Operating Expenses Breakdown (2021–2025)")
+    expense_categories = ["Personnel costs", "Governance costs", "Finance costs (excl deposit interest)", "Administration expenses"]
+    fig_expenses = px.line(filtered_income, x="Year", y=expense_categories, markers=True, title="Operating Expenses by Category")
+    fig_expenses.update_layout(xaxis_title="Year", yaxis_title="Ksh")
+    st.plotly_chart(fig_expenses, use_container_width=True)
+    
+    # Graph 3: Net Surplus vs Dividends
     fig2 = go.Figure()
     fig2.add_trace(go.Bar(x=filtered_income["Year"], y=filtered_income["Net surplus after tax"], name="Net Surplus after tax"))
     fig2.add_trace(go.Scatter(x=filtered_income["Year"], y=filtered_income["Proposed Dividends"], name="Proposed Dividends", mode="lines+markers"))
     fig2.update_layout(title="Net Surplus vs Proposed Dividends", xaxis_title="Year", yaxis_title="Ksh")
     st.plotly_chart(fig2, use_container_width=True)
     
-    # Key ratios
+    # Graph 4: Key Ratios
     st.subheader("📐 Key Financial Ratios")
     ratio_df = filtered_income.melt(id_vars="Year", value_vars=["Cost of funds / Revenue (%)", "Net surplus margin (%)", "Dividend payout ratio (%)"])
     fig3 = px.line(ratio_df, x="Year", y="value", color="variable", markers=True, title="Ratios (%)")
     st.plotly_chart(fig3, use_container_width=True)
     
-    # Data table for Income Statement
+    # Data table
     with st.expander("📋 View Income Statement Data Table"):
         st.dataframe(filtered_income.style.format("{:,.0f}", subset=filtered_income.select_dtypes(include='number').columns))
 
@@ -139,7 +141,7 @@ with tab1:
 with tab2:
     st.subheader("🏛️ Balance Sheet Trends (2021–2025)")
     
-    # Line graph: Total Assets & Total Liabilities & Equity
+    # Total Assets, Liabilities, Equity
     fig_bal1 = go.Figure()
     fig_bal1.add_trace(go.Scatter(x=filtered_balance["Year"], y=filtered_balance["Total Assets"], mode="lines+markers", name="Total Assets"))
     fig_bal1.add_trace(go.Scatter(x=filtered_balance["Year"], y=filtered_balance["Total Liabilities"], mode="lines+markers", name="Total Liabilities"))
@@ -147,39 +149,38 @@ with tab2:
     fig_bal1.update_layout(title="Total Assets, Liabilities & Equity", xaxis_title="Year", yaxis_title="Ksh")
     st.plotly_chart(fig_bal1, use_container_width=True)
     
-    # Line graph: Key Asset Components
+    # Major Asset Components
     st.subheader("📦 Major Asset Components")
     asset_components = ["Loans portfolio (net)", "Cash and cash equivalents", "Prepayments & sundry receivables", "Financial investments"]
     fig_assets = px.line(filtered_balance, x="Year", y=asset_components, markers=True, title="Asset Evolution")
     st.plotly_chart(fig_assets, use_container_width=True)
     
-    # Line graph: Major Liabilities
+    # Major Liabilities
     st.subheader("📜 Major Liabilities")
     liability_components = ["Non-withdrawable member deposits", "Interest on member deposits (accrued)", "Proposed dividends payable", "Payables and accruals"]
     fig_liab = px.line(filtered_balance, x="Year", y=liability_components, markers=True, title="Liability Evolution")
     st.plotly_chart(fig_liab, use_container_width=True)
     
-    # Line graph: Equity Components
+    # Equity Components
     st.subheader("👥 Shareholders' Equity")
     equity_components = ["Share Capital", "Reserves (statutory + revenue)"]
     fig_equity = px.line(filtered_balance, x="Year", y=equity_components, markers=True, title="Share Capital vs Reserves")
     st.plotly_chart(fig_equity, use_container_width=True)
     
-    # Key Balance Sheet Ratios
+    # Balance Sheet Ratios
     st.subheader("📊 Key Balance Sheet Ratios")
     ratio_bal_cols = ["Loans / Assets (%)", "Equity / Assets (%)", "Cash / Assets (%)", "Member deposits / Assets (%)"]
     ratio_bal_df = filtered_balance.melt(id_vars="Year", value_vars=ratio_bal_cols)
     fig_ratios_bal = px.line(ratio_bal_df, x="Year", y="value", color="variable", markers=True, title="Balance Sheet Ratios (%)")
     st.plotly_chart(fig_ratios_bal, use_container_width=True)
     
-    # Data table for Balance Sheet
+    # Data table
     with st.expander("📋 View Balance Sheet Data Table"):
-        # Format numbers
         display_cols = [col for col in filtered_balance.columns if filtered_balance[col].dtype in ['int64', 'float64']]
         st.dataframe(filtered_balance.style.format("{:,.0f}", subset=display_cols))
 
 # ------------------------------------------------------------
-# DOWNLOAD BUTTONS
+# DOWNLOAD BUTTONS (Sidebar)
 # ------------------------------------------------------------
 st.sidebar.markdown("---")
 st.sidebar.subheader("Download Data (CSV)")
