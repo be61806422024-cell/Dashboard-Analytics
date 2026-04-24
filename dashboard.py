@@ -4,8 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-st.set_page_config(page_title="KEMU SACCO Financial Dashboard", layout="wide")
-st.title("🏦 KEMU SACCO Financial Dashboard")
+st.set_page_config(page_title="Financial Dashboard", layout="wide")
+st.title("🏦Financial Dashboard")
 st.markdown("#### Statement of Comprehensive Income & Statement of Financial Position (2021–2025)")
 
 # ------------------------------------------------------------
