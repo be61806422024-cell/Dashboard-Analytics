@@ -85,17 +85,59 @@ filtered_income = income_df[income_df["Year"].isin(selected_years)]
 filtered_balance = balance_df[balance_df["Year"].isin(selected_years)]
 
 # ------------------------------------------------------------
-# Key Metrics Row (latest year 2025)
+# Key Metrics Row with directional arrows (2025 vs 2024)
 # ------------------------------------------------------------
 st.header("📈 Key Metrics - Latest Year (2025)")
-col1, col2, col3, col4 = st.columns(4)
-latest_income = income_df[income_df["Year"] == 2025].iloc[0]
-latest_balance = balance_df[balance_df["Year"] == 2025].iloc[0]
 
-col1.metric("Total Revenue", f"Ksh {latest_income['Total Revenue']:,.0f}")
-col2.metric("Net Surplus after tax", f"Ksh {latest_income['Net surplus after tax']:,.0f}")
-col3.metric("Total Assets", f"Ksh {latest_balance['Total Assets']:,.0f}")
-col4.metric("Shareholders' Funds", f"Ksh {latest_balance['Total Shareholders\' Funds']:,.0f}")
+# Get 2025 and 2024 data
+df_2025 = income_df[income_df["Year"] == 2025].iloc[0]
+df_2024 = income_df[income_df["Year"] == 2024].iloc[0]
+bal_2025 = balance_df[balance_df["Year"] == 2025].iloc[0]
+bal_2024 = balance_df[balance_df["Year"] == 2024].iloc[0]
+
+def format_delta_income(current, previous, reverse_color=False):
+    delta = current - previous
+    delta_percent = (delta / previous) * 100 if previous != 0 else 0
+    if reverse_color:
+        if delta > 0:
+            return f"🔴 ▲ +{delta:,.0f} ({delta_percent:.1f}%)"
+        elif delta < 0:
+            return f"🟢 ▼ {delta:,.0f} ({delta_percent:.1f}%)"
+        else:
+            return "⚪ No change"
+    else:
+        if delta > 0:
+            return f"🟢 ▲ +{delta:,.0f} ({delta_percent:.1f}%)"
+        elif delta < 0:
+            return f"🔴 ▼ {delta:,.0f} ({delta_percent:.1f}%)"
+        else:
+            return "⚪ No change"
+
+def format_delta_balance(current, previous):
+    delta = current - previous
+    delta_percent = (delta / previous) * 100 if previous != 0 else 0
+    if delta > 0:
+        return f"🔵 ▲ +{delta:,.0f} ({delta_percent:.1f}%)"
+    elif delta < 0:
+        return f"🔵 ▼ {delta:,.0f} ({delta_percent:.1f}%)"
+    else:
+        return "⚪ No change"
+
+# Compute deltas
+rev_delta = format_delta_income(df_2025["Total Revenue"], df_2024["Total Revenue"])
+surplus_delta = format_delta_income(df_2025["Net surplus after tax"], df_2024["Net surplus after tax"])
+expense_delta = format_delta_income(df_2025["Total Operating Costs"], df_2024["Total Operating Costs"], reverse_color=True)
+assets_delta = format_delta_balance(bal_2025["Total Assets"], bal_2024["Total Assets"])
+liabilities_delta = format_delta_balance(bal_2025["Total Liabilities"], bal_2024["Total Liabilities"])
+equity_delta = format_delta_balance(bal_2025["Total Shareholders' Funds"], bal_2024["Total Shareholders' Funds"])
+
+col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1.metric("💰 Total Revenue", f"Ksh {df_2025['Total Revenue']:,.0f}", delta=rev_delta)
+col2.metric("📈 Net Surplus after tax", f"Ksh {df_2025['Net surplus after tax']:,.0f}", delta=surplus_delta)
+col3.metric("⚠️ Total Operating Costs", f"Ksh {df_2025['Total Operating Costs']:,.0f}", delta=expense_delta)
+col4.metric("🏛️ Total Assets", f"Ksh {bal_2025['Total Assets']:,.0f}", delta=assets_delta)
+col5.metric("📜 Total Liabilities", f"Ksh {bal_2025['Total Liabilities']:,.0f}", delta=liabilities_delta)
+col6.metric("👥 Shareholders' Funds", f"Ksh {bal_2025['Total Shareholders\' Funds']:,.0f}", delta=equity_delta)
 
 st.markdown("---")
 
@@ -189,4 +231,4 @@ csv_balance = filtered_balance.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button("⬇️ Income Statement CSV", csv_income, "income_statement.csv", "text/csv")
 st.sidebar.download_button("⬇️ Balance Sheet CSV", csv_balance, "balance_sheet.csv", "text/csv")
 
-st.sidebar.info("Data sources: KEMU SACCO audited annual reports 2021–2025. Corrected figures for 2023 applied.")
+st.sidebar.info("Data sources: Audited annual reports 2021–2025. Corrected figures for 2023 applied.")
