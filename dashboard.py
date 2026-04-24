@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Financial Analysis Dashboard", layout="wide")
-st.title("🏦 Financial Analysis Dashboard")
+st.set_page_config(page_title="KEMU SACCO Financial Dashboard", layout="wide")
+st.title("🏦 KEMU SACCO Financial Dashboard")
 st.markdown("#### Statement of Comprehensive Income & Statement of Financial Position (2021–2025)")
 
 # ------------------------------------------------------------
@@ -92,6 +92,7 @@ st.header("📈 Key Metrics - Latest Year (2025)")
 # Get 2025 and 2024 data
 df_2025 = income_df[income_df["Year"] == 2025].iloc[0]
 df_2024 = income_df[income_df["Year"] == 2024].iloc[0]
+df_2021 = income_df[income_df["Year"] == 2021].iloc[0]
 bal_2025 = balance_df[balance_df["Year"] == 2025].iloc[0]
 bal_2024 = balance_df[balance_df["Year"] == 2024].iloc[0]
 
@@ -123,7 +124,7 @@ def format_delta_balance(current, previous):
     else:
         return "⚪ No change"
 
-# Compute deltas
+# Compute year-on-year deltas (2025 vs 2024)
 rev_delta = format_delta_income(df_2025["Total Revenue"], df_2024["Total Revenue"])
 surplus_delta = format_delta_income(df_2025["Net surplus after tax"], df_2024["Net surplus after tax"])
 expense_delta = format_delta_income(df_2025["Total Operating Costs"], df_2024["Total Operating Costs"], reverse_color=True)
@@ -131,6 +132,7 @@ assets_delta = format_delta_balance(bal_2025["Total Assets"], bal_2024["Total As
 liabilities_delta = format_delta_balance(bal_2025["Total Liabilities"], bal_2024["Total Liabilities"])
 equity_delta = format_delta_balance(bal_2025["Total Shareholders' Funds"], bal_2024["Total Shareholders' Funds"])
 
+# Display 6 columns for year-on-year
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("💰 Total Revenue", f"Ksh {df_2025['Total Revenue']:,.0f}", delta=rev_delta)
 col2.metric("📈 Net Surplus after tax", f"Ksh {df_2025['Net surplus after tax']:,.0f}", delta=surplus_delta)
@@ -138,6 +140,46 @@ col3.metric("⚠️ Total Operating Costs", f"Ksh {df_2025['Total Operating Cost
 col4.metric("🏛️ Total Assets", f"Ksh {bal_2025['Total Assets']:,.0f}", delta=assets_delta)
 col5.metric("📜 Total Liabilities", f"Ksh {bal_2025['Total Liabilities']:,.0f}", delta=liabilities_delta)
 col6.metric("👥 Shareholders' Funds", f"Ksh {bal_2025['Total Shareholders\' Funds']:,.0f}", delta=equity_delta)
+
+# ------------------------------------------------------------
+# CAGR (Compound Annual Growth Rate) over 5 years (2021–2025)
+# ------------------------------------------------------------
+st.subheader("📈 CAGR (2021–2025)")
+
+def compute_cagr(start_val, end_val, years):
+    if start_val <= 0:
+        return None
+    return (end_val / start_val) ** (1 / years) - 1
+
+years = 4  # from 2021 to 2025 is 4 years of growth
+
+rev_cagr = compute_cagr(df_2021["Total Revenue"], df_2025["Total Revenue"], years)
+cost_cagr = compute_cagr(df_2021["Total Operating Costs"], df_2025["Total Operating Costs"], years)
+surplus_cagr = compute_cagr(df_2021["Net surplus after tax"], df_2025["Net surplus after tax"], years)
+
+def format_cagr(cagr_value, is_expense=False):
+    if cagr_value is None:
+        return "N/A"
+    percent = cagr_value * 100
+    if is_expense:
+        if percent > 0:
+            return f"🔴 ▲ +{percent:.1f}%"
+        elif percent < 0:
+            return f"🟢 ▼ {percent:.1f}%"
+        else:
+            return f"⚪ {percent:.1f}%"
+    else:
+        if percent > 0:
+            return f"🟢 ▲ +{percent:.1f}%"
+        elif percent < 0:
+            return f"🔴 ▼ {percent:.1f}%"
+        else:
+            return f"⚪ {percent:.1f}%"
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Total Revenue CAGR", format_cagr(rev_cagr), help="Compound Annual Growth Rate from 2021 to 2025")
+c2.metric("Total Operating Costs CAGR", format_cagr(cost_cagr, is_expense=True), help="Compound Annual Growth Rate from 2021 to 2025")
+c3.metric("Net Surplus after tax CAGR", format_cagr(surplus_cagr), help="Compound Annual Growth Rate from 2021 to 2025")
 
 st.markdown("---")
 
@@ -155,7 +197,7 @@ with tab1:
     fig1.update_layout(title="Revenue and Operating Costs", xaxis_title="Year", yaxis_title="Ksh")
     st.plotly_chart(fig1, use_container_width=True)
     
-    # Graph 2: Operating Expenses Breakdown (NEW)
+    # Graph 2: Operating Expenses Breakdown
     st.subheader("📉 Operating Expenses Breakdown (2021–2025)")
     expense_categories = ["Personnel costs", "Governance costs", "Finance costs (excl deposit interest)", "Administration expenses"]
     fig_expenses = px.line(filtered_income, x="Year", y=expense_categories, markers=True, title="Operating Expenses by Category")
@@ -231,4 +273,4 @@ csv_balance = filtered_balance.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button("⬇️ Income Statement CSV", csv_income, "income_statement.csv", "text/csv")
 st.sidebar.download_button("⬇️ Balance Sheet CSV", csv_balance, "balance_sheet.csv", "text/csv")
 
-st.sidebar.info("Data sources: Audited annual reports 2021–2025. Corrected figures for 2023 applied.")
+st.sidebar.info("Data sources: KEMU SACCO audited annual reports 2021–2025. Corrected figures for 2023 applied.")
