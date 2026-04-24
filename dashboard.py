@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="KEMU SACCO Financial Dashboard", layout="wide")
-st.title("🏦 KEMU SACCO Financial Dashboard")
+st.set_page_config(page_title="Financial Dashboard", layout="wide")
+st.title("🏦 Financial Dashboard")
 st.markdown("#### Statement of Comprehensive Income & Statement of Financial Position (2021–2025)")
 
 # ------------------------------------------------------------
@@ -273,4 +273,4 @@ csv_balance = filtered_balance.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button("⬇️ Income Statement CSV", csv_income, "income_statement.csv", "text/csv")
 st.sidebar.download_button("⬇️ Balance Sheet CSV", csv_balance, "balance_sheet.csv", "text/csv")
 
-st.sidebar.info("Data sources: KEMU SACCO audited annual reports 2021–2025. Corrected figures for 2023 applied.")
+st.sidebar.info("Data sources:audited annual reports 2021–2025.")
