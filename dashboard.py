@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="KEMU SACCO Financial Dashboard", layout="wide")
-st.title("🏦 KEMU SACCO Financial Dashboard")
+st.set_page_config(page_title="Financial Analysis Dashboard", layout="wide")
+st.title("🏦 Financial Analysis Dashboard")
 st.markdown("#### Statement of Comprehensive Income & Statement of Financial Position (2021–2025)")
 
 # ------------------------------------------------------------
